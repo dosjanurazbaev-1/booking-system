@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: booking-system
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
