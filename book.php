@@ -1,30 +1,41 @@
 <?php
-// Обработка формы бронирования с Tilda
+session_start();
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $phone = $_POST['phone'] ?? '';
-    $seat = $_POST['seat'] ?? '';
-    $date = date('Y-m-d H:i:s');
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $user = $_SESSION['user'];
+    $place = $_POST['place'];
+    $date = $_POST['date'];
 
-    if ($name === '' || $email === '' || $seat === '') {
-        http_response_code(400);
-        echo "Ошибка: не все поля заполнены.";
-        exit;
+    if (!file_exists("bookings.csv")) {
+        file_put_contents("bookings.csv", "user,place,date\n");
     }
 
-    $file = __DIR__ . '/bookings.csv';
-    if (!file_exists($file)) {
-        file_put_contents($file, "name,email,phone,seat,date\n");
-    }
+    $file = fopen("bookings.csv", "a");
+    fputcsv($file, [$user, $place, $date]);
+    fclose($file);
 
-    $line = "$name,$email,$phone,$seat,$date\n";
-    file_put_contents($file, $line, FILE_APPEND);
-
-    echo "OK";
-} else {
-    http_response_code(405);
-    echo "Метод не поддерживается";
+    echo "<p>✅ Место успешно забронировано!</p>";
 }
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Бронирование мест</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h2>Бронирование мест</h2>
+    <p>Вы вошли как: <b><?= $_SESSION['user'] ?></b> | <a href="logout.php">Выйти</a></p>
+
+    <form method="POST">
+        Место: <input type="text" name="place" required><br><br>
+        Дата: <input type="date" name="date" required><br><br>
+        <button type="submit">Забронировать</button>
+    </form>
+</body>
+</html>
