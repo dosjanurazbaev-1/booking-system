@@ -1,42 +1,35 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = trim($_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+header('Content-Type: application/json');
 
-    if (!file_exists("users.csv")) {
-        file_put_contents("users.csv", "email,password\n");
-    }
+$dataDir = __DIR__ . '/data';
+if (!is_dir($dataDir)) mkdir($dataDir, 0777, true);
 
-    // Проверяем, не зарегистрирован ли уже
-    $users = array_map('str_getcsv', file('users.csv'));
-    foreach ($users as $user) {
-        if ($user[0] == $email) {
-            die("Пользователь с таким email уже существует. <a href='login.php'>Войти</a>");
-        }
-    }
-
-    $file = fopen("users.csv", "a");
-    fputcsv($file, [$email, $password]);
-    fclose($file);
-
-    header("Location: login.php");
-    exit();
+$file = $dataDir . '/users.csv';
+if (!file_exists($file)) {
+    $fp = fopen($file, 'w');
+    fputcsv($fp, ['username', 'password']);
+    fclose($fp);
 }
-?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Регистрация</title>
-    <meta charset="utf-8">
-</head>
-<body>
-    <h2>Регистрация</h2>
-    <form method="POST">
-        Email: <input type="email" name="email" required><br><br>
-        Пароль: <input type="password" name="password" required><br><br>
-        <button type="submit">Зарегистрироваться</button>
-    </form>
-    <p>Уже есть аккаунт? <a href="login.php">Войти</a></p>
-</body>
-</html>
+$post = json_decode(file_get_contents('php://input'), true);
+$username = trim($post['username'] ?? '');
+$password = trim($post['password'] ?? '');
+
+if (!$username || !$password) {
+    echo json_encode(['success' => false, 'message' => 'Толық толтырыңыз']);
+    exit;
+}
+
+$users = array_map('str_getcsv', file($file));
+foreach ($users as $user) {
+    if ($user[0] === $username) {
+        echo json_encode(['success' => false, 'message' => 'Бұл логин бар']);
+        exit;
+    }
+}
+
+$fp = fopen($file, 'a');
+fputcsv($fp, [$username, password_hash($password, PASSWORD_DEFAULT)]);
+fclose($fp);
+
+echo json_encode(['success' => true, 'message' => 'Тіркелу сәтті өтті']);
