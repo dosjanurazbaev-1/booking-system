@@ -1,11 +1,13 @@
-# Используем официальный PHP образ с Apache
 FROM php:8.2-apache
 
-# Копируем все файлы в контейнер
+# Копируем проект в Apache
 COPY . /var/www/html/
 
-# Включаем нужные модули (например, mysqli, pdo и т.д.)
+# Устанавливаем PHP-расширения
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Открываем порт
+# Даём Apache полные права на запись (CSV-файлы)
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 775 /var/www/html
+
 EXPOSE 80
