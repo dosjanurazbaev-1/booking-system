@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-$file = __DIR__ . '/data/users.csv';
+$file = __DIR__ . 'users.csv';
 if (!file_exists($file)) {
     echo json_encode(['success' => false, 'message' => 'Пайдаланушылар базасы жоқ']);
     exit;
@@ -21,3 +21,4 @@ foreach ($users as $user) {
 }
 
 echo json_encode(['success' => false, 'message' => 'Қате логин немесе пароль']);
+
