@@ -1,29 +1,24 @@
 <?php
-session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-$file = __DIR__ . 'users.csv';
-if (!file_exists($file)) {
-    echo json_encode(["success" => false, "message" => "Пайдаланушылар базасы жоқ"]);
+$usersFile = __DIR__ . '/data/users.csv';
+$data = json_decode(file_get_contents('php://input'), true);
+$username = trim($data['username'] ?? '');
+$password = trim($data['password'] ?? '');
+
+if (!file_exists($usersFile)) {
+    echo json_encode(['success' => false, 'message' => 'Пайдаланушылар базасы жоқ']);
     exit;
 }
 
-$email = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
-
-if (!$email || !$password) {
-    echo json_encode(["success" => false, "message" => "Email мен пароль енгізіңіз."]);
-    exit;
-}
-
-$users = array_map('str_getcsv', file($file));
-foreach ($users as $user) {
-    if ($user[0] === $email && password_verify($password, $user[1])) {
-        $_SESSION['user'] = $email;
-        echo json_encode(["success" => true, "message" => "Кіру сәтті өтті."]);
+$lines = file($usersFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+foreach ($lines as $line) {
+    [$user, $hash] = str_getcsv($line);
+    if ($user === $username && password_verify($password, $hash)) {
+        echo json_encode(['success' => true, 'message' => 'Кіру сәтті өтті!']);
         exit;
     }
 }
 
-echo json_encode(["success" => false, "message" => "Қате логин немесе пароль"]);
+echo json_encode(['success' => false, 'message' => 'Қате логин немесе пароль']);
 ?>
