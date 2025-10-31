@@ -6,8 +6,15 @@ COPY . /var/www/html/
 # Устанавливаем PHP-расширения
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Даём Apache полные права на запись (CSV-файлы)
+# Создаём каталог data (для CSV)
+RUN mkdir -p /var/www/html/data
+
+# Даём Apache полные права на запись в проект и data
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 775 /var/www/html
+RUN chmod -R 777 /var/www/html/data
+
+# Включаем mod_rewrite (если понадобится позже)
+RUN a2enmod rewrite
 
 EXPOSE 80
