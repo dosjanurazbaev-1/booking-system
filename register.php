@@ -12,8 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $db = new PDO('sqlite:' . __DIR__ . '/database.db');
+    $db = new PDO('sqlite:/var/www/html/data/database.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 
     $data = $_POST ?: json_decode(file_get_contents('php://input'), true);
     $email = trim($data['email'] ?? '');
