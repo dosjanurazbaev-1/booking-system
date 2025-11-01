@@ -1,11 +1,9 @@
 <?php
-// Рұқсат беру (CORS)
 header("Access-Control-Allow-Origin: https://jailasu.tilda.ws");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
-// OPTIONS сұрауын өңдеу (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -13,42 +11,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Пайдаланушылар базасы
-$usersFile = __DIR__ . '/users.csv';
+try {
+    $db = new PDO('sqlite:' . __DIR__ . '/database.db');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Кіріс деректерін оқу
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
+    $data = $_POST ?: json_decode(file_get_contents('php://input'), true);
+    $email = trim($data['email'] ?? '');
+    $password = trim($data['password'] ?? '');
 
-// Егер JSON бос болса — POST деректері арқылы алуға тырысамыз
-if (!$data) {
-    $data = $_POST;
-}
-
-$username = trim($data['email'] ?? '');
-$password = trim($data['password'] ?? '');
-
-// Егер өрістер бос болса
-if ($username === '' || $password === '') {
-    echo json_encode(['success' => false, 'message' => 'Барлық өрістерді толтырыңыз!']);
-    exit;
-}
-
-// Файл бар ма?
-if (!file_exists($usersFile)) {
-    echo json_encode(['success' => false, 'message' => 'Пайдаланушылар базасы жоқ']);
-    exit;
-}
-
-// Логинді тексеру
-$lines = file($usersFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-foreach ($lines as $line) {
-    [$user, $hash] = str_getcsv($line);
-    if ($user === $username && password_verify($password, $hash)) {
-        echo json_encode(['success' => true, 'message' => 'Кіру сәтті өтті!']);
+    if ($email === '' || $password === '') {
+        echo json_encode(['success' => false, 'message' => 'Барлық өрістерді толтырыңыз!']);
         exit;
     }
-}
 
-echo json_encode(['success' => false, 'message' => 'Қате логин немесе пароль']);
+    // Проверка пользователя
+    $stmt = $db->prepare("SELECT password FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user && password_verify($password, $user['password'])) {
+        echo json_encode(['success' => true, 'message' => 'Кіру сәтті өтті!']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Қате email немесе құпиясөз.']);
+    }
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Қате: ' . $e->getMessage()]);
+}
 ?>
