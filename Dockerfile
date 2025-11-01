@@ -15,6 +15,7 @@ RUN mkdir -p /var/data && \
     chmod -R 775 /var/data && \
     chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html
+    chmod -R 777 /var/data
 
 
 # Включаем mod_rewrite (если понадобится позже)
