@@ -15,7 +15,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 header('Content-Type: application/json; charset=utf-8');
 
-$usersFile = __DIR__ . '/data/users.csv';
+$usersFile = __DIR__ . 'users.csv';
 $data = json_decode(file_get_contents('php://input'), true);
 $username = trim($data['username'] ?? '');
 $password = trim($data['password'] ?? '');
@@ -36,4 +36,5 @@ foreach ($lines as $line) {
 
 echo json_encode(['success' => false, 'message' => 'Қате логин немесе пароль']);
 ?>
+
 
