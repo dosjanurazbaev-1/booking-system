@@ -12,17 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $db = new PDO('sqlite:' . __DIR__ . '/database.db');
+    // Путь к постоянной базе данных
+    $db = new PDO('sqlite:/var/www/html/data/database.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $data = $_POST ?: json_decode(file_get_contents('php://input'), true);
-    $email = trim($data['email'] ?? '');
-    $password = trim($data['password'] ?? '');
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $email = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
 
-    if ($email === '' || $password === '') {
-        echo json_encode(['success' => false, 'message' => 'Барлық өрістерді толтырыңыз!']);
-        exit;
-    }
+        if (empty($email) || empty($password)) {
+            echo json_encode(["success" => false, "message" => "Барлық өрістерді толтырыңыз."]);
+            exit;
+        }
 
     // Проверка пользователя
     $stmt = $db->prepare("SELECT password FROM users WHERE email = ?");
@@ -38,3 +39,4 @@ try {
     echo json_encode(['success' => false, 'message' => 'Қате: ' . $e->getMessage()]);
 }
 ?>
+
