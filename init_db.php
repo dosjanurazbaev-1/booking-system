@@ -1,6 +1,6 @@
 <?php
 try {
-    $db = new PDO('sqlite:/var/www/html/database.db');
+    $db = new PDO('sqlite:/var/www/html/data/database.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Таблица пользователей
