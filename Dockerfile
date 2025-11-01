@@ -12,10 +12,9 @@ RUN mkdir -p /var/www/html/data
 # Даём Apache полные права на запись в проект и data
 RUN mkdir -p /var/data && \
     chown -R www-data:www-data /var/data && \
-    chmod -R 775 /var/data && \
+    chmod -R 777 /var/data && \
     chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html
-    chmod -R 777 /var/data
 
 
 # Включаем mod_rewrite (если понадобится позже)
