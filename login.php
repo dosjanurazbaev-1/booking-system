@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // Путь к постоянной базе данных
-    $dbPath = $_ENV['DB_PATH'] ?? '/var/data/database.db';
+    // 🔹 Путь к постоянной базе (Render дискіне)
+    $dbPath = getenv('DB_PATH') ?: '/var/data/database.db';
     $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -21,25 +21,23 @@ try {
         $email = trim($_POST['email'] ?? '');
         $password = trim($_POST['password'] ?? '');
 
-        if (empty($email) || empty($password)) {
-            echo json_encode(["success" => false, "message" => "Барлық өрістерді толтырыңыз."]);
+        if ($email === '' || $password === '') {
+            echo json_encode(['success' => false, 'message' => 'Барлық өрістерді толтырыңыз.']);
             exit;
         }
 
-    // Проверка пользователя
-    $stmt = $db->prepare("SELECT password FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // 🔹 Іздейміз қолданушыны
+        $stmt = $db->prepare("SELECT password FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user['password'])) {
-        echo json_encode(['success' => true, 'message' => 'Кіру сәтті өтті!']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Қате email немесе құпиясөз.']);
+        if ($user && password_verify($password, $user['password'])) {
+            echo json_encode(['success' => true, 'message' => 'Кіру сәтті өтті!']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Қате email немесе құпиясөз.']);
+        }
     }
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Қате: ' . $e->getMessage()]);
 }
 ?>
-
-
-
