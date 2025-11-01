@@ -13,7 +13,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     // Путь к постоянной базе данных
-    $db = new PDO('sqlite:' . ($_ENV['DB_PATH'] ?? '/var/www/html/data/database.db'));
+    $dbPath = $_ENV['DB_PATH'] ?? '/var/data/database.db';
+    $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -39,5 +40,6 @@ try {
     echo json_encode(['success' => false, 'message' => 'Қате: ' . $e->getMessage()]);
 }
 ?>
+
 
 
