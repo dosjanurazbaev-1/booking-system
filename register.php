@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 
 // Пусть файлы хранятся в каталоге /var/www/html/data
-$usersFile = __DIR__ . '/data/users.csv';
+$usersFile = __DIR__ . 'users.csv';
 
 $data = json_decode(file_get_contents('php://input'), true);
 $username = trim($data['username'] ?? '');
