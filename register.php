@@ -12,7 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $db = new PDO('sqlite:' . ($_ENV['DB_PATH'] ?? '/var/www/html/data/database.db'));
+    $dbPath = $_ENV['DB_PATH'] ?? '/var/data/database.db';
+    $db = new PDO('sqlite:' . $dbPath);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
