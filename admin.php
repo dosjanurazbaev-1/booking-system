@@ -1,34 +1,43 @@
 <?php
-// Разрешаем запросы с Tilda
 header("Access-Control-Allow-Origin: https://jailasu.tilda.ws");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
-// Обрабатываем preflight (OPTIONS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-
 header('Content-Type: application/json; charset=utf-8');
-session_start();
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
-    exit();
-}
 
-echo "<h2>Все бронирования</h2>";
+try {
+    $db = new PDO('sqlite:' . (getenv('DB_PATH') ?: '/var/data/database.db'));
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-if (file_exists("bookings.csv")) {
-    $rows = array_map('str_getcsv', file('bookings.csv'));
-    echo "<table border='1' cellpadding='5'><tr><th>Пользователь</th><th>Место</th><th>Дата</th></tr>";
-    foreach ($rows as $row) {
-        echo "<tr><td>{$row[0]}</td><td>{$row[1]}</td><td>{$row[2]}</td></tr>";
+    $data = json_decode(file_get_contents('php://input'), true);
+    $email = trim($data['email'] ?? '');
+    $service = trim($data['service'] ?? '');
+    $date = trim($data['date'] ?? '');
+    $time = trim($data['time'] ?? '');
+
+    if (!$email || !$service || !$date || !$time) {
+        echo json_encode(['success' => false, 'message' => 'Барлық өрістерді толтырыңыз.']);
+        exit;
     }
-    echo "</table>";
-} else {
-    echo "<p>Нет бронирований.</p>";
+
+    // Дубликат броньды тексеру
+    $stmt = $db->prepare("SELECT id FROM bookings WHERE date = ? AND time = ?");
+    $stmt->execute([$date, $time]);
+    if ($stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Бұл уақыт бос емес.']);
+        exit;
+    }
+
+    $stmt = $db->prepare("INSERT INTO bookings (user_email, service, date, time) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$email, $service, $date, $time]);
+
+    echo json_encode(['success' => true, 'message' => 'Брондау сәтті өтті!']);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Қате: ' . $e->getMessage()]);
 }
 ?>
-
