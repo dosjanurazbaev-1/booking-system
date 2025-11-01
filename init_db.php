@@ -1,16 +1,26 @@
 <?php
 try {
-    $db = new PDO('sqlite:' . __DIR__ . '/database.db');
+    $db = new PDO('sqlite:/var/www/html/database.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Таблица пользователей
     $db->exec("CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE,
         password TEXT
     )");
 
-    echo "✅ Database initialized successfully!";
-} catch (PDOException $e) {
-    echo "❌ Error: " . $e->getMessage();
+    // Таблица броней
+    $db->exec("CREATE TABLE IF NOT EXISTS bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        date TEXT,
+        place TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )");
+
+    echo 'Database initialized successfully!';
+} catch (Exception $e) {
+    echo 'Error: ' . $e->getMessage();
 }
 ?>
