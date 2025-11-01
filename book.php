@@ -8,12 +8,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
 header('Content-Type: application/json; charset=utf-8');
 
 try {
+    // SQLite базаға қосылу
     $db = new PDO('sqlite:' . (getenv('DB_PATH') ?: '/var/data/database.db'));
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // JSON деректерді оқу
     $data = json_decode(file_get_contents('php://input'), true);
     $email = trim($data['email'] ?? '');
     $service = trim($data['service'] ?? '');
@@ -25,16 +28,58 @@ try {
         exit;
     }
 
-    // Дубликат броньды тексеру
-    $stmt = $db->prepare("SELECT id FROM bookings WHERE date = ? AND time = ?");
-    $stmt->execute([$date, $time]);
-    if ($stmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'Бұл уақыт бос емес.']);
+    // Email тіркелген бе?
+    $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        echo json_encode(['success' => false, 'message' => 'Бұл email тіркелмеген.']);
         exit;
     }
 
-    $stmt = $db->prepare("INSERT INTO bookings (user_email, service, date, time) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$email, $service, $date, $time]);
+    // CSV файлына жол
+    $csvDir = '/var/data';
+    $csvFile = $csvDir . '/' . strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '', $service)) . '.csv';
+
+    // Қалта бар-жоғын тексеру
+    if (!file_exists($csvDir)) {
+        mkdir($csvDir, 0777, true);
+    }
+
+    // CSV файлын ашу (жоқ болса – жасау)
+    $isNew = !file_exists($csvFile);
+    $fp = fopen($csvFile, 'a');
+    if (!$fp) {
+        echo json_encode(['success' => false, 'message' => 'CSV файлын ашу мүмкін емес.']);
+        exit;
+    }
+
+    // Егер жаңа файл болса – баған атауларын жазу
+    if ($isNew) {
+        fputcsv($fp, ['Email', 'Service', 'Date', 'Time']);
+    }
+
+    // Дубликат броньды тексеру (CSV ішінен)
+    $existing = false;
+    if (($handle = fopen($csvFile, 'r')) !== false) {
+        while (($row = fgetcsv($handle)) !== false) {
+            if ($row[2] === $date && $row[3] === $time) {
+                $existing = true;
+                break;
+            }
+        }
+        fclose($handle);
+    }
+
+    if ($existing) {
+        echo json_encode(['success' => false, 'message' => 'Бұл уақыт бос емес.']);
+        fclose($fp);
+        exit;
+    }
+
+    // Жаңа жазба енгізу
+    fputcsv($fp, [$email, $service, $date, $time]);
+    fclose($fp);
 
     echo json_encode(['success' => true, 'message' => 'Брондау сәтті өтті!']);
 } catch (Exception $e) {
